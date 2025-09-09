@@ -8,22 +8,22 @@
         <v-container>
           <v-row>
             <v-col cols="12">
-              <v-text-field label="Name*" v-model="contact.name" required></v-text-field>
+              <v-text-field label="Name*" v-model="contact.name" :error-messages="errors.name" required></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field label="CPF*" v-model="contact.cpf" required></v-text-field>
+              <v-text-field label="CPF*" v-model="contact.cpf" :error-messages="errors.cpf" required></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field label="Phone*" v-model="contact.phone" required></v-text-field>
+              <v-text-field label="Phone*" v-model="contact.phone" :error-messages="errors.phone" required></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field label="CEP*" v-model="contact.cep" @blur="searchCep" required></v-text-field>
+              <v-text-field label="CEP*" v-model="contact.cep" @blur="searchCep" :error-messages="errors.cep" required></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field label="Street*" v-model="contact.street" required></v-text-field>
+              <v-text-field label="Street*" v-model="contact.street" :error-messages="errors.street" required></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-text-field label="Number*" v-model="contact.number" required></v-text-field>
+              <v-text-field label="Number*" v-model="contact.number" :error-messages="errors.number" required></v-text-field>
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field label="Complement" v-model="contact.complement"></v-text-field>
@@ -64,6 +64,7 @@ const emit = defineEmits(['update:modelValue', 'saved'])
 
 const dialog = ref(props.modelValue)
 const contact = ref({})
+const errors = ref({})
 
 const formTitle = computed(() => (props.isEdit ? 'Edit Contact' : 'New Contact'))
 
@@ -71,6 +72,7 @@ watch(() => props.modelValue, (val) => {
   dialog.value = val
   if (val) {
     contact.value = { ...props.contactData }
+    errors.value = {} // Limpa os erros ao abrir o dialog
   } else {
     contact.value = {}
   }
@@ -94,6 +96,7 @@ const searchCep = async () => {
 }
 
 const save = async () => {
+  errors.value = {} // Limpa os erros antes de salvar
   try {
     if (props.isEdit) {
       await api.put(`/contacts/${contact.value.id}`, contact.value);
@@ -103,8 +106,12 @@ const save = async () => {
     emit('saved');
     close();
   } catch (error) {
-    console.error('Failed to save contact:', error);
-    // TODO: Show validation errors to user
+    if (error.response && error.response.status === 422) {
+      errors.value = error.response.data.errors;
+    } else {
+      console.error('Failed to save contact:', error);
+      // TODO: Show a generic error snackbar to the user
+    }
   }
 }
 
