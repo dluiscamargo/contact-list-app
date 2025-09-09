@@ -167,11 +167,13 @@ const deleteContact = async (id) => {
 const logout = async () => {
   try {
     await api.post('/logout');
+  } catch (error) {
+    console.error('Logout failed, but proceeding with client-side cleanup:', error);
+  } finally {
+    // Esta parte será executada independentemente de sucesso ou falha
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
     router.push('/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
   }
 }
 
